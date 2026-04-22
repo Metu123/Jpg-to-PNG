@@ -41,7 +41,7 @@ def convert_batch(folder_path: Path, output_dir: Path = None, overwrite=False):
 
     files = list(folder_path.iterdir())
     if not files:
-        print("No files found.")
+        print("this don't exist.")
         return
 
     for file in files:
