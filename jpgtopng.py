@@ -20,7 +20,7 @@ def convert_image(input_path: Path, output_dir: Path = None, overwrite=False):
 
     try:
         with Image.open(input_path) as img:
-            # Handle transparency properly
+            
             if img.mode in ("RGBA", "LA"):
                 background = Image.new("RGB", img.size, (255, 255, 255))
                 background.paste(img, mask=img.split()[-1])
