@@ -15,7 +15,7 @@ def convert_image(input_path: Path, output_dir: Path = None, overwrite=False):
     output_path = output_dir / f"{input_path.stem}.png"
 
     if output_path.exists() and not overwrite:
-        print(f"Skipped (already exists): {output_path}")
+        print(f"Skipped (This exist already): {output_path}")
         return
 
     try:
