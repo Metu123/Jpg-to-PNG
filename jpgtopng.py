@@ -1,13 +1,17 @@
 from PIL import Image
 from pathlib import Path
 
-
-SUPPORTED_EXTENSIONS = {".jpg", ".jpeg"}
+SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".webp", ".bmp"}
 
 
 def convert_image(input_path: Path, output_dir: Path = None, overwrite=False):
-    if not input_path.exists() or input_path.suffix.lower() not in SUPPORTED_EXTENSIONS:
-        raise ValueError(f"Invalid image file: {input_path}")
+    if not input_path.exists():
+        print(f"File does not exist: {input_path}")
+        return
+
+    if input_path.suffix.lower() not in SUPPORTED_EXTENSIONS:
+        print(f"Unsupported file type: {input_path.name}")
+        return
 
     output_dir = output_dir or input_path.parent
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -15,14 +19,19 @@ def convert_image(input_path: Path, output_dir: Path = None, overwrite=False):
     output_path = output_dir / f"{input_path.stem}.png"
 
     if output_path.exists() and not overwrite:
-        print(f"Skipped (This exist already): {output_path}")
+        print(f"Skipped (already exists): {output_path}")
         return
 
     try:
         with Image.open(input_path) as img:
-            
-            if img.mode in ("RGBA", "LA"):
+
+            # Handle transparency
+            if img.mode in ("RGBA", "LA", "P"):
                 background = Image.new("RGB", img.size, (255, 255, 255))
+
+                if img.mode == "P":
+                    img = img.convert("RGBA")
+
                 background.paste(img, mask=img.split()[-1])
                 img = background
             else:
@@ -37,28 +46,41 @@ def convert_image(input_path: Path, output_dir: Path = None, overwrite=False):
 
 def convert_batch(folder_path: Path, output_dir: Path = None, overwrite=False):
     if not folder_path.exists() or not folder_path.is_dir():
-        raise ValueError("Invalid folder path")
-
-    files = list(folder_path.iterdir())
-    if not files:
-        print("this don't exist.")
+        print("Invalid folder path.")
         return
 
-    for file in files:
-        if file.suffix.lower() in SUPPORTED_EXTENSIONS:
-            convert_image(file, output_dir, overwrite)
+    image_files = [
+        file for file in folder_path.iterdir()
+        if file.suffix.lower() in SUPPORTED_EXTENSIONS
+    ]
+
+    if not image_files:
+        print("No supported image files found.")
+        return
+
+    for file in image_files:
+        convert_image(file, output_dir, overwrite)
+
+    print("Batch conversion completed.")
 
 
 def main():
-    choice = input("Convert (1) single image or (2) folder? ").strip()
+    print("PNG Image Converter")
+    print("1. Convert single image")
+    print("2. Convert folder")
+
+    choice = input("Select option: ").strip()
+
+    overwrite_choice = input("Overwrite existing PNG files? (y/n): ").strip().lower()
+    overwrite = overwrite_choice == "y"
 
     if choice == "1":
         path = Path(input("Enter image path: ").strip())
-        convert_image(path)
+        convert_image(path, overwrite=overwrite)
 
     elif choice == "2":
         folder = Path(input("Enter folder path: ").strip())
-        convert_batch(folder)
+        convert_batch(folder, overwrite=overwrite)
 
     else:
         print("Invalid option.")
